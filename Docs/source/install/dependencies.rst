@@ -18,7 +18,7 @@ Optional dependencies include:
 - for on-node accelerated compute *one of either*:
 
   - `OpenMP 3.1+ <https://www.openmp.org>`__: for threaded CPU execution or
-  - `CUDA Toolkit 11.0+ (11.3+ recommended) <https://developer.nvidia.com/cuda-downloads>`__: for Nvidia GPU support (see `matching host-compilers <https://gist.github.com/ax3l/9489132>`_) or
+  - `CUDA Toolkit 11.7+ <https://developer.nvidia.com/cuda-downloads>`__: for Nvidia GPU support (see `matching host-compilers <https://gist.github.com/ax3l/9489132>`_) or
   - `ROCm 5.2+ (5.5+ recommended) <https://gpuopen.com/learn/amd-lab-notes/amd-lab-notes-rocm-installation-readme/>`__: for AMD GPU support
 - `FFTW3 <http://www.fftw.org>`_: for spectral solver (PSATD) support when running on CPU or SYCL
 
@@ -75,7 +75,7 @@ Conda (Linux/macOS/Windows)
 
       .. code-block:: bash
 
-         conda create -n warpx-cpu-mpich-dev -c conda-forge blaspp boost ccache cmake compilers git lapackpp "openpmd-api=*=mpi_mpich*" python numpy pandas scipy yt "fftw=*=mpi_mpich*" pkg-config matplotlib mamba mpich mpi4py ninja pip virtualenv
+         conda create -n warpx-cpu-mpich-dev -c conda-forge blaspp boost ccache cmake compilers git lapackpp "openpmd-api=*=mpi_mpich*" python make numpy pandas scipy yt "fftw=*=mpi_mpich*" pkg-config matplotlib mamba mpich mpi4py ninja pip virtualenv
          conda activate warpx-cpu-mpich-dev
 
          # compile WarpX with -DWarpX_MPI=ON
@@ -85,7 +85,7 @@ Conda (Linux/macOS/Windows)
 
       .. code-block:: bash
 
-         conda create -n warpx-cpu-dev -c conda-forge blaspp boost ccache cmake compilers git lapackpp openpmd-api python numpy pandas scipy yt fftw pkg-config matplotlib mamba ninja pip virtualenv
+         conda create -n warpx-cpu-dev -c conda-forge blaspp boost ccache cmake compilers git lapackpp openpmd-api python make numpy pandas scipy yt fftw pkg-config matplotlib mamba ninja pip virtualenv
          conda activate warpx-cpu-dev
 
          # compile WarpX with -DWarpX_MPI=OFF
@@ -106,6 +106,14 @@ For OpenMP support, you will further need:
       .. code-block:: bash
 
          conda install -c conda-forge llvm-openmp
+
+For Nvidia CUDA GPU support, you will need to have `a recent CUDA driver installed <https://developer.nvidia.com/cuda-downloads>`__ or you can lower the CUDA version of `the Nvidia cuda package <https://docs.nvidia.com/cuda/cuda-installation-guide-linux/index.html#conda-installation>`__ and `conda-forge to match your drivers <https://docs.cupy.dev/en/stable/install.html#install-cupy-from-conda-forge>`__ and then add these packages:
+
+.. code-block:: bash
+
+   conda install -c nvidia -c conda-forge cuda cupy
+
+More info for `CUDA-enabled ML packages <https://twitter.com/jeremyphoward/status/1697435241152127369>`__.
 
 
 Spack (Linux/macOS)

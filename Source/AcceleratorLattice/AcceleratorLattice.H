@@ -11,6 +11,8 @@
 #include "LatticeElements/Drift.H"
 #include "LatticeElements/HardEdgedQuadrupole.H"
 #include "LatticeElements/HardEdgedPlasmaLens.H"
+#include "LatticeElements/Solenoid.H"
+#include "LatticeElements/SolenoidRF.H"
 
 #include <memory>
 #include <string>
@@ -66,12 +68,15 @@ public:
      * @param[in] a_pti the grid where the finder is needed
      * @param[in] a_offset the particle offset since the finded needs information about the particles as well
      */
-    LatticeElementFinderDevice GetFinderDeviceInstance (WarpXParIter const& a_pti, int a_offset) const;
+    [[nodiscard]] LatticeElementFinderDevice
+    GetFinderDeviceInstance (WarpXParIter const& a_pti, int a_offset) const;
 
     /* All of the available lattice element types */
     Drift h_drift;
     HardEdgedQuadrupole h_quad;
     HardEdgedPlasmaLens h_plasmalens;
+    Solenoid h_solenoid;
+    SolenoidRF h_solenoidrf;
 
 };
 

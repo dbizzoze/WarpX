@@ -9,6 +9,8 @@
 
 #include "LatticeElements/HardEdgedQuadrupole.H"
 #include "LatticeElements/HardEdgedPlasmaLens.H"
+#include "LatticeElements/Solenoid.H"
+#include "LatticeElements/SolenoidRF.H"
 #include "Particles/Pusher/GetAndSetPosition.H"
 #include "Particles/WarpXParticleContainer.H"
 
@@ -78,6 +80,8 @@ struct LatticeElementFinder
     /* The index lookup tables for each lattice element type */
     amrex::Gpu::DeviceVector<int> d_quad_indices;
     amrex::Gpu::DeviceVector<int> d_plasmalens_indices;
+    amrex::Gpu::DeviceVector<int> d_solenoid_indices;
+    amrex::Gpu::DeviceVector<int> d_solenoidrf_indices;
 
     /**
      * \brief Fill in the index lookup tables
@@ -89,52 +93,7 @@ struct LatticeElementFinder
      */
     void setup_lattice_indices (amrex::Gpu::DeviceVector<amrex::ParticleReal> const & zs,
                                 amrex::Gpu::DeviceVector<amrex::ParticleReal> const & ze,
-                                amrex::Gpu::DeviceVector<int> & indices)
-    {
-
-        using namespace amrex::literals;
-
-        const auto nelements = static_cast<int>(zs.size());
-        amrex::ParticleReal const * zs_arr = zs.data();
-        amrex::ParticleReal const * ze_arr = ze.data();
-        int * indices_arr = indices.data();
-
-        amrex::Real const zmin = m_zmin;
-        amrex::Real const dz = m_dz;
-
-        amrex::ParticleReal const gamma_boost = m_gamma_boost;
-        amrex::ParticleReal const uz_boost = m_uz_boost;
-        amrex::Real const time = m_time;
-
-        amrex::ParallelFor( m_nz,
-            [=] AMREX_GPU_DEVICE (int iz) {
-
-                // Get the location of the grid node
-                amrex::Real z_node = zmin + iz*dz;
-
-                if (gamma_boost > 1._prt) {
-                    // Transform to lab frame
-                    z_node = gamma_boost*z_node + uz_boost*time;
-                }
-
-                // Find the index to the element that is closest to the grid cell.
-                // For now, this assumes that there is no overlap among elements of the same type.
-                for (int ie = 0 ; ie < nelements ; ie++) {
-                    // Find the mid points between element ie and the ones before and after it.
-                    // The first and last element need special handling.
-                    const amrex::ParticleReal zcenter_left = (ie == 0)?
-                        (std::numeric_limits<amrex::ParticleReal>::lowest()) : (0.5_prt*(ze_arr[ie-1] + zs_arr[ie]));
-                    const amrex::ParticleReal zcenter_right = (ie < nelements - 1)?
-                        (0.5_prt*(ze_arr[ie] + zs_arr[ie+1])) : (std::numeric_limits<amrex::ParticleReal>::max());
-                    if (zcenter_left <= z_node && z_node < zcenter_right) {
-                        indices_arr[iz] = ie;
-                    }
-
-                }
-            }
-        );
-    }
-
+                                amrex::Gpu::DeviceVector<int> & indices);
 };
 
 /**
@@ -167,7 +126,7 @@ struct LatticeElementFinderDevice
     amrex::ParticleReal m_uz_boost;
     amrex::Real m_time;
 
-    GetParticlePosition m_get_position;
+    GetParticlePosition<PIdx> m_get_position;
     const amrex::ParticleReal* AMREX_RESTRICT m_ux = nullptr;
     const amrex::ParticleReal* AMREX_RESTRICT m_uy = nullptr;
     const amrex::ParticleReal* AMREX_RESTRICT m_uz = nullptr;
@@ -175,10 +134,14 @@ struct LatticeElementFinderDevice
     /* Device level instances for each lattice element type */
     HardEdgedQuadrupoleDevice d_quad;
     HardEdgedPlasmaLensDevice d_plasmalens;
+    SolenoidDevice d_solenoid;
+    SolenoidRFDevice d_solenoidrf;
 
     /* Device level index lookup tables for each element type */
     int const* d_quad_indices_arr = nullptr;
     int const* d_plasmalens_indices_arr = nullptr;
+    int const* d_solenoid_indices_arr = nullptr;
+    int const* d_solenoidrf_indices_arr = nullptr;
 
     /**
      * \brief Gather the field for the particle from the lattice elements
@@ -219,10 +182,10 @@ struct LatticeElementFinderDevice
 
         amrex::ParticleReal Ex_sum = 0._prt;
         amrex::ParticleReal Ey_sum = 0._prt;
-        const amrex::ParticleReal Ez_sum = 0._prt;
+        amrex::ParticleReal Ez_sum = 0._prt;
         amrex::ParticleReal Bx_sum = 0._prt;
         amrex::ParticleReal By_sum = 0._prt;
-        const amrex::ParticleReal Bz_sum = 0._prt;
+        amrex::ParticleReal Bz_sum = 0._prt;
 
         if (d_quad.nelements > 0) {
             if (d_quad_indices_arr[iz] > -1) {
@@ -245,6 +208,34 @@ struct LatticeElementFinderDevice
                 Ey_sum += Ey;
                 Bx_sum += Bx;
                 By_sum += By;
+            }
+        }
+
+        if (d_solenoid.nelements > 0) {
+            if (d_solenoid_indices_arr[iz] > -1) {
+                const auto ielement = d_solenoid_indices_arr[iz];
+                amrex::ParticleReal Ex, Ey, Ez, Bx, By, Bz;
+                d_solenoid.get_field(ielement, x, y, z, Ex, Ey, Ez, Bx, By, Bz);
+                Ex_sum += Ex;
+                Ey_sum += Ey;
+                Ez_sum += Ez;
+                Bx_sum += Bx;
+                By_sum += By;
+                Bz_sum += Bz;
+            }
+        }
+
+        if (d_solenoidrf.nelements > 0) {
+            if (d_solenoidrf_indices_arr[iz] > -1) {
+                const auto ielement = d_solenoidrf_indices_arr[iz];
+                amrex::ParticleReal Ex, Ey, Ez, Bx, By, Bz;
+                d_solenoidrf.get_field(ielement, x, y, z, m_time, Ex, Ey, Ez, Bx, By, Bz);
+                Ex_sum += Ex;
+                Ey_sum += Ey;
+                Ez_sum += Ez;
+                Bx_sum += Bx;
+                By_sum += By;
+                Bz_sum += Bz;
             }
         }
 

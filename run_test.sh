@@ -61,17 +61,14 @@ echo "cd $PWD"
 rm -rf py-venv
 python3 -m venv py-venv
 source py-venv/bin/activate
-python3 -m pip install --upgrade pip setuptools wheel
+python3 -m pip install --upgrade pip
+python3 -m pip install --upgrade build packaging setuptools wheel
 python3 -m pip install --upgrade cmake
-# setuptools/mp4py work-around, see
-#   https://github.com/mpi4py/mpi4py/pull/159
-#   https://github.com/mpi4py/mpi4py/issues/157#issuecomment-1001022274
-export SETUPTOOLS_USE_DISTUTILS="stdlib"
 python3 -m pip install --upgrade -r warpx/Regression/requirements.txt
 
 # Clone AMReX and warpx-data
 git clone https://github.com/AMReX-Codes/amrex.git
-cd amrex && git checkout --detach b98bdae9fb67e5d9aafc488de92c53001bd323ec && cd -
+cd amrex && git checkout --detach 75571e2dcbf2417529c5ed8e24113580e8e1f3f1 && cd -
 # warpx-data contains various required data sets
 git clone --depth 1 https://github.com/ECP-WarpX/warpx-data.git
 # openPMD-example-datasets contains various required data sets
