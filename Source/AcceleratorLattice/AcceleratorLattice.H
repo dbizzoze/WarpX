@@ -11,6 +11,7 @@
 #include "LatticeElements/Drift.H"
 #include "LatticeElements/HardEdgedQuadrupole.H"
 #include "LatticeElements/HardEdgedPlasmaLens.H"
+#include "LatticeElements/Solenoid.H"
 
 #include <memory>
 #include <string>
@@ -72,6 +73,7 @@ public:
     Drift h_drift;
     HardEdgedQuadrupole h_quad;
     HardEdgedPlasmaLens h_plasmalens;
+    Solenoid h_solenoid;
 
 };
 

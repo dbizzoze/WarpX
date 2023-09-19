@@ -11,6 +11,7 @@
 #include "LatticeElements/Drift.H"
 #include "LatticeElements/HardEdgedQuadrupole.H"
 #include "LatticeElements/HardEdgedPlasmaLens.H"
+#include "LatticeElements/Solenoid.H"
 
 #include <AMReX_REAL.H>
 
@@ -64,6 +65,9 @@ AcceleratorLattice::ReadLattice (std::string const & root_name, amrex::ParticleR
         }
         else if (element_type == "plasmalens") {
             h_plasmalens.AddElement(pp_element, z_location);
+        }
+        else if (element_type == "solenoid") {
+            h_solenoid.AddElement(pp_element, z_location);
         }
         else if (element_type == "line") {
             ReadLattice(element_name, z_location);

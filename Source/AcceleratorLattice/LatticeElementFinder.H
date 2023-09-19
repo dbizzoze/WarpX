@@ -9,6 +9,7 @@
 
 #include "LatticeElements/HardEdgedQuadrupole.H"
 #include "LatticeElements/HardEdgedPlasmaLens.H"
+#inlcude "LatticeElements/Solenoid.H"
 #include "Particles/Pusher/GetAndSetPosition.H"
 #include "Particles/WarpXParticleContainer.H"
 
@@ -175,10 +176,12 @@ struct LatticeElementFinderDevice
     /* Device level instances for each lattice element type */
     HardEdgedQuadrupoleDevice d_quad;
     HardEdgedPlasmaLensDevice d_plasmalens;
+    SolenoidDevice d_solenoid;
 
     /* Device level index lookup tables for each element type */
     int const* d_quad_indices_arr = nullptr;
     int const* d_plasmalens_indices_arr = nullptr;
+    int const* d_solenoid_indices_arr = nullptr;
 
     /**
      * \brief Gather the field for the particle from the lattice elements
@@ -241,6 +244,18 @@ struct LatticeElementFinderDevice
                 const auto ielement = d_plasmalens_indices_arr[iz];
                 amrex::ParticleReal Ex, Ey, Bx, By;
                 d_plasmalens.get_field(ielement, x, y, z, zpvdt, Ex, Ey, Bx, By);
+                Ex_sum += Ex;
+                Ey_sum += Ey;
+                Bx_sum += Bx;
+                By_sum += By;
+            }
+        }
+
+        if (d_solenoid.nelements > 0) {
+            if (d_solenoid_indices_arr[iz] > -1) {
+                const auto ielement = d_solenoid_indices_arr[iz];
+                amrex::ParticleReal Ex, Ey, Bx, By;
+                d_solenoid.get_field(ielement, x, y, z, zpvdt, Ex, Ey, Bx, By);
                 Ex_sum += Ex;
                 Ey_sum += Ey;
                 Bx_sum += Bx;
