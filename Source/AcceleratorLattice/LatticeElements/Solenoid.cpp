@@ -24,13 +24,27 @@ Solenoid::AddElement (amrex::ParmParse & pp_element, amrex::ParticleReal & z_loc
 
     AddElementBase(pp_element, z_location);
 
-    amrex::ParticleReal dEdx = 0._prt;
-    amrex::ParticleReal dBdx = 0._prt;
-    utils::parser::queryWithParser(pp_element, "dEdx", dEdx);
-    utils::parser::queryWithParser(pp_element, "dBdx", dBdx);
+    amrex::ParticleReal ds = 0._prt;
+    amrex::ParticleReal bscale = 0._prt;
+    std::vector<amrex::ParticleReal> sin_coef = {};
+    std::vector<amrex::ParticleReal> cos_coef = {};
+    int mapsteps = 1;
+    int nslice = 1;
 
-    h_dEdx.push_back(dEdx);
-    h_dBdx.push_back(dBdx);
+    utils::parser::queryWithParser(pp_element, "ds", ds);
+    utils::parser::queryWithParser(pp_element, "bscale", bscale);
+    utils::parser::queryWithParser(pp_element, "sin_coef", sin_coef);
+    utils::parser::queryWithParser(pp_element, "cos_coef", cos_coef);
+    utils::parser::queryWithParser(pp_element, "mapsteps", mapsteps);
+    utils::parser::queryWithParser(pp_element, "cos_coef", nslice);
+
+    h_ds.push_back(ds);
+    h_bscale.push_back(bscale);
+    h_sin_coef.push_back(sin_coef);
+    h_cos_coef.push_back(cos_coef);
+    h_mapsteps.push_back(mapsteps);
+    h_nslice.push_back(nslice);
+
 }
 
 void
@@ -38,10 +52,18 @@ Solenoid::WriteToDevice ()
 {
     WriteToDeviceBase();
 
-    d_dEdx.resize(h_dEdx.size());
-    amrex::Gpu::copyAsync(amrex::Gpu::hostToDevice, h_dEdx.begin(), h_dEdx.end(), d_dEdx.begin());
-    d_dBdx.resize(h_dBdx.size());
-    amrex::Gpu::copyAsync(amrex::Gpu::hostToDevice, h_dBdx.begin(), h_dBdx.end(), d_dBdx.begin());
+    d_ds.resize(h_ds.size());
+    amrex::Gpu::copyAsync(amrex::Gpu::hostToDevice, h_ds.begin(), h_ds.end(), d_ds.begin());
+    d_bscale.resize(h_bscale.size());
+    amrex::Gpu::copyAsync(amrex::Gpu::hostToDevice, h_bscale.begin(), h_bscale.end(), d_bscale.begin());
+    d_sin_coef.resize(h_sin_coef.size());
+    amrex::Gpu::copyAsync(amrex::Gpu::hostToDevice, h_sin_coef.begin(), h_sin_coef.end(), d_sin_coef.begin());
+    d_cos_coef.resize(h_cos_coef.size());
+    amrex::Gpu::copyAsync(amrex::Gpu::hostToDevice, h_cos_coef.begin(), h_cos_coef.end(), d_cos_coef.begin());
+    d_mapstep.resize(h_ds.size());
+    amrex::Gpu::copyAsync(amrex::Gpu::hostToDevice, h_mapstep.begin(), h_mapstep.end(), d_mapstep.begin());
+    d_nslice.resize(h_nslice.size());
+    amrex::Gpu::copyAsync(amrex::Gpu::hostToDevice, h_nslice.begin(), h_nslice.end(), d_nslice.begin());
 }
 
 SolenoidDevice
@@ -56,14 +78,18 @@ void
 SolenoidDevice::InitSolenoidDevice (Solenoid const& h_solenoid)
 {
 
-    nelements = h_quad.nelements;
+    nelements = h_solenoid.nelements;
 
     if (nelements == 0) return;
 
     d_zs_arr = h_solenoid.d_zs.data();
     d_ze_arr = h_solenoid.d_ze.data();
 
-    d_dEdx_arr = h_solenoid.d_dEdx.data();
-    d_dBdx_arr = h_solenoid.d_dBdx.data();
+    d_ds_arr = h_solenoid.d_ds.data();
+    d_bscale_arr = h_solenoid.d_bscale.data();
+    d_sin_coef_arr = h_solenoid.d_sin_coef.data();
+    d_cos_coef_arr = h_solenoid.d_cos_coef.data();
+    d_mapstep_arr = h_solenoid.d_mapstep.data();
+    d_nslice_arr = h_solenoid.d_nslice.data();
 
 }
