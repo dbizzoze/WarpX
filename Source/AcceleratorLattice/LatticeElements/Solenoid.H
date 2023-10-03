@@ -46,11 +46,25 @@ struct Solenoid
 
     /* The field gradients */
     /* On the host */
-    std::vector<amrex::ParticleReal> h_dEdx;
-    std::vector<amrex::ParticleReal> h_dBdx;
+    //std::vector<amrex::ParticleReal> h_dEdx;
+    //std::vector<amrex::ParticleReal> h_dBdx;
     /* On the device */
-    amrex::Gpu::DeviceVector<amrex::ParticleReal> d_dEdx;
-    amrex::Gpu::DeviceVector<amrex::ParticleReal> d_dBdx;
+    //amrex::Gpu::DeviceVector<amrex::ParticleReal> d_dEdx;
+    //amrex::Gpu::DeviceVector<amrex::ParticleReal> d_dBdx;
+
+    std::vector<amrex::ParticleReal> h_ds;
+    std::vector<amrex::ParticleReal> h_bscale;
+    std::vector<std::vector<amrex::ParticleReal>> h_sin_coef;
+    std::vector<std::vector<amrex::ParticleReal>> h_cos_coef;
+    std::vector<int> h_mapsteps;
+    std::vector<int> h_nslice;
+
+    amrex::Gpu::DeviceVector<amrex::ParticleReal> d_ds;
+    amrex::Gpu::DeviceVector<amrex::ParticleReal> d_bscale;
+    amrex::Gpu::DeviceVector<std::vector<amrex::ParticleReal>> d_sin_coef;
+    amrex::Gpu::DeviceVector<std::vector<amrex::ParticleReal>> d_cos_coef;
+    amrex::Gpu::DeviceVector<int> d_mapsteps;
+    amrex::Gpu::DeviceVector<int> d_nslice;
 
     /**
      * \brief Returns the device level instance with the lattice information
@@ -77,8 +91,15 @@ struct SolenoidDevice
     const amrex::ParticleReal* AMREX_RESTRICT d_zs_arr;
     const amrex::ParticleReal* AMREX_RESTRICT d_ze_arr;
 
-    const amrex::ParticleReal* AMREX_RESTRICT d_dEdx_arr;
-    const amrex::ParticleReal* AMREX_RESTRICT d_dBdx_arr;
+    //const amrex::ParticleReal* AMREX_RESTRICT d_dEdx_arr;
+    //const amrex::ParticleReal* AMREX_RESTRICT d_dBdx_arr;
+
+    const amrex::ParticleReal* AMREX_RESTRICT d_ds_arr;
+    const amrex::ParticleReal* AMREX_RESTRICT d_bscale_arr;
+    const std::vector<amrex::ParticleReal>* AMREX_RESTRICT d_sin_coef_arr;
+    const std::vector<amrex::ParticleReal>* AMREX_RESTRICT d_cos_coef_arr;
+    const amrex::ParticleReal* AMREX_RESTRICT d_mapsteps_arr;
+    const amrex::ParticleReal* AMREX_RESTRICT d_nslice_arr;
 
     /**
      * \brief Fetch the field of the specified element at the given location
@@ -86,7 +107,7 @@ struct SolenoidDevice
      * @param[in] ielement the element number
      * @param[in] x, y, z the particle position in the lab frame
      * @param[in] zpvdt the estimated next particle z position, z + v*dt
-     * @param[out] Ex, Ey, Bx, By the fetched field in the lab frame
+     * @param[out] Ex, Ey, Ez, Bx, By, Bz the fetched field in the lab frame
      */
     AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
     void get_field (const int ielement,
@@ -96,21 +117,30 @@ struct SolenoidDevice
                     const amrex::ParticleReal zpvdt,
                     amrex::ParticleReal& Ex,
                     amrex::ParticleReal& Ey,
+                    amrex::ParticleReal& Ez,
                     amrex::ParticleReal& Bx,
-                    amrex::ParticleReal& By) const
+                    amrex::ParticleReal& By,
+                    amrex::ParticleReal& Bz) const
     {
 
         // Calculate the residence correction, the fraction of the time step that the particle
         // spends inside the hard edged element.
-        amrex::ParticleReal const frac = hard_edged_fraction(z, zpvdt, d_zs_arr[ielement], d_ze_arr[ielement]);
+        //amrex::ParticleReal const frac = hard_edged_fraction(z, zpvdt, d_zs_arr[ielement], d_ze_arr[ielement]);
 
-        const amrex::ParticleReal dEdx = frac*d_dEdx_arr[ielement];
-        const amrex::ParticleReal dBdx = frac*d_dBdx_arr[ielement];
+        //const amrex::ParticleReal dEdx = frac*d_dEdx_arr[ielement];
+        //const amrex::ParticleReal dBdx = frac*d_dBdx_arr[ielement];
 
-        Ex = +x*dEdx;
-        Ey = -y*dEdx;
-        Bx = +y*dBdx;
-        By = +x*dBdx;
+        //Ex = +x*dEdx;
+        //Ey = -y*dEdx;
+        //Bx = +y*dBdx;
+        //By = +x*dBdx;
+
+        Ex = Ex;
+        Ey = Ey;
+        Ez = Ez;
+        Bx = Bx;
+        By = By;
+        Bz = Bz;
 
     }
 

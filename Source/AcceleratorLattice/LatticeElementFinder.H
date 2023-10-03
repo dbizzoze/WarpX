@@ -9,7 +9,7 @@
 
 #include "LatticeElements/HardEdgedQuadrupole.H"
 #include "LatticeElements/HardEdgedPlasmaLens.H"
-#inlcude "LatticeElements/Solenoid.H"
+#include "LatticeElements/Solenoid.H"
 #include "Particles/Pusher/GetAndSetPosition.H"
 #include "Particles/WarpXParticleContainer.H"
 
@@ -79,6 +79,7 @@ struct LatticeElementFinder
     /* The index lookup tables for each lattice element type */
     amrex::Gpu::DeviceVector<int> d_quad_indices;
     amrex::Gpu::DeviceVector<int> d_plasmalens_indices;
+    amrex::Gpu::DeviceVector<int> d_solenoid_indices;
 
     /**
      * \brief Fill in the index lookup tables
@@ -222,10 +223,10 @@ struct LatticeElementFinderDevice
 
         amrex::ParticleReal Ex_sum = 0._prt;
         amrex::ParticleReal Ey_sum = 0._prt;
-        const amrex::ParticleReal Ez_sum = 0._prt;
+        amrex::ParticleReal Ez_sum = 0._prt;
         amrex::ParticleReal Bx_sum = 0._prt;
         amrex::ParticleReal By_sum = 0._prt;
-        const amrex::ParticleReal Bz_sum = 0._prt;
+        amrex::ParticleReal Bz_sum = 0._prt;
 
         if (d_quad.nelements > 0) {
             if (d_quad_indices_arr[iz] > -1) {
@@ -254,12 +255,14 @@ struct LatticeElementFinderDevice
         if (d_solenoid.nelements > 0) {
             if (d_solenoid_indices_arr[iz] > -1) {
                 const auto ielement = d_solenoid_indices_arr[iz];
-                amrex::ParticleReal Ex, Ey, Bx, By;
-                d_solenoid.get_field(ielement, x, y, z, zpvdt, Ex, Ey, Bx, By);
+                amrex::ParticleReal Ex, Ey, Ez, Bx, By, Bz;
+                d_solenoid.get_field(ielement, x, y, z, zpvdt, Ex, Ey, Ez, Bx, By, Bz);
                 Ex_sum += Ex;
                 Ey_sum += Ey;
+                Ez_sum += Ez;
                 Bx_sum += Bx;
                 By_sum += By;
+                Bz_sum += Bz;
             }
         }
 
