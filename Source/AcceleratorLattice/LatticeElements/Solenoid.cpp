@@ -80,7 +80,6 @@ SolenoidDevice::InitSolenoidDevice (Solenoid const& h_solenoid)
 
     d_zs_arr = h_solenoid.d_zs.data();
     d_ze_arr = h_solenoid.d_ze.data();
-
     d_scale_arr = h_solenoid.d_scale.data();
     d_freq_arr = h_solenoid.d_freq.data();
     d_theta_arr = h_solenoid.d_theta.data();

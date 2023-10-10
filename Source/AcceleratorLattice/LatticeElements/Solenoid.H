@@ -45,20 +45,14 @@ struct Solenoid
     void
     WriteToDevice ();
 
-    /* The field gradients */
-    /* On the host */
-    //std::vector<amrex::ParticleReal> h_dEdx;
-    //std::vector<amrex::ParticleReal> h_dBdx;
-    /* On the device */
-    //amrex::Gpu::DeviceVector<amrex::ParticleReal> d_dEdx;
-    //amrex::Gpu::DeviceVector<amrex::ParticleReal> d_dBdx;
-
+    // Host variables read from input file
     std::vector<amrex::ParticleReal> h_scale;
     std::vector<amrex::ParticleReal> h_freq;
     std::vector<amrex::ParticleReal> h_theta;
     std::vector<std::vector<amrex::ParticleReal>> h_e_coef;
     std::vector<std::vector<amrex::ParticleReal>> h_b_coef;
 
+    // Device variable read from input files
     amrex::Gpu::DeviceVector<amrex::ParticleReal> d_scale;
     amrex::Gpu::DeviceVector<amrex::ParticleReal> d_freq;
     amrex::Gpu::DeviceVector<amrex::ParticleReal> d_theta;
@@ -89,10 +83,6 @@ struct SolenoidDevice
 
     const amrex::ParticleReal* AMREX_RESTRICT d_zs_arr;
     const amrex::ParticleReal* AMREX_RESTRICT d_ze_arr;
-
-    //const amrex::ParticleReal* AMREX_RESTRICT d_dEdx_arr;
-    //const amrex::ParticleReal* AMREX_RESTRICT d_dBdx_arr;
-
     const amrex::ParticleReal* AMREX_RESTRICT d_scale_arr;
     const amrex::ParticleReal* AMREX_RESTRICT d_freq_arr;
     const amrex::ParticleReal* AMREX_RESTRICT d_theta_arr;
@@ -104,7 +94,7 @@ struct SolenoidDevice
      *
      * @param[in] ielement the element number
      * @param[in] x, y, z the particle position in the lab frame
-     * @param[in] zpvdt the estimated next particle z position, z + v*dt
+     * @param[in] m_time the current time in the lab frame
      * @param[out] Ex, Ey, Ez, Bx, By, Bz the fetched field in the lab frame
      */
     AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
@@ -120,18 +110,6 @@ struct SolenoidDevice
                     amrex::ParticleReal& By,
                     amrex::ParticleReal& Bz) const
     {
-
-        // Calculate the residence correction, the fraction of the time step that the particle
-        // spends inside the hard edged element.
-        //amrex::ParticleReal const frac = hard_edged_fraction(z, zpvdt, d_zs_arr[ielement], d_ze_arr[ielement]);
-
-        //const amrex::ParticleReal dEdx = frac*d_dEdx_arr[ielement];
-        //const amrex::ParticleReal dBdx = frac*d_dBdx_arr[ielement];
-
-        //Ex = +x*dEdx;
-        //Ey = -y*dEdx;
-        //Bx = +y*dBdx;
-        //By = +x*dBdx;
 
         const amrex::ParticleReal zs = d_zs_arr[ielement];
         const amrex::ParticleReal ze = d_ze_arr[ielement];
@@ -150,7 +128,7 @@ struct SolenoidDevice
         amrex::ParticleReal tmpcos = cos((2*pi*freq*m_time) + theta)
         amrex::ParticleReal tmpsin = sin((2*pi*freq*m_time) + theta)
 
-        amrex::ParticleReal zz = z - ze;
+        amrex::ParticleReal zz = z - ze + zlen/2;
         amrex::ParticleReal ez = e_coef[0]/2;
         amrex::ParticleReal ezp = 0.0;
         amrex::ParticleReal ezpp = 0.0;
