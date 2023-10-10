@@ -256,7 +256,7 @@ struct LatticeElementFinderDevice
             if (d_solenoid_indices_arr[iz] > -1) {
                 const auto ielement = d_solenoid_indices_arr[iz];
                 amrex::ParticleReal Ex, Ey, Ez, Bx, By, Bz;
-                d_solenoid.get_field(ielement, x, y, z, zpvdt, Ex, Ey, Ez, Bx, By, Bz);
+                d_solenoid.get_field(ielement, x, y, z, m_time, Ex, Ey, Ez, Bx, By, Bz);
                 Ex_sum += Ex;
                 Ey_sum += Ey;
                 Ez_sum += Ez;
