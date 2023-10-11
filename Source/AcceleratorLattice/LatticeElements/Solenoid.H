@@ -56,8 +56,8 @@ struct Solenoid
     amrex::Gpu::DeviceVector<amrex::ParticleReal> d_scale;
     amrex::Gpu::DeviceVector<amrex::ParticleReal> d_freq;
     amrex::Gpu::DeviceVector<amrex::ParticleReal> d_theta;
-    amrex::Gpu::DeviceVector<std::vector<amrex::ParticleReal>> d_e_coef;
-    amrex::Gpu::DeviceVector<std::vector<amrex::ParticleReal>> d_b_coef;
+    amrex::Vector<amrex::Gpu::DeviceVector<amrex::ParticleReal>> d_e_coef;
+    amrex::Vector<amrex::Gpu::DeviceVector<amrex::ParticleReal>> d_b_coef;
 
     /**
      * \brief Returns the device level instance with the lattice information
@@ -86,8 +86,10 @@ struct SolenoidDevice
     const amrex::ParticleReal* AMREX_RESTRICT d_scale_arr;
     const amrex::ParticleReal* AMREX_RESTRICT d_freq_arr;
     const amrex::ParticleReal* AMREX_RESTRICT d_theta_arr;
-    const std::vector<amrex::ParticleReal>* AMREX_RESTRICT d_e_coef_arr;
-    const std::vector<amrex::ParticleReal>* AMREX_RESTRICT d_b_coef_arr;
+    unsigned long* AMREX_RESTRICT d_num_e_coef;
+    unsigned long* AMREX_RESTRICT d_num_b_coef;
+    const amrex::ParticleReal** AMREX_RESTRICT d_e_coef_arr;
+    const amrex::ParticleReal** AMREX_RESTRICT d_b_coef_arr;
 
     /**
      * \brief Fetch the field of the specified element at the given location
@@ -116,28 +118,28 @@ struct SolenoidDevice
         const amrex::ParticleReal scale = d_scale_arr[ielement];
         const amrex::ParticleReal freq = d_freq_arr[ielement];
         const amrex::ParticleReal theta = d_theta_arr[ielement];
-        const amrex::Vector<amrex::ParticleReal> e_coef = d_e_coef_arr[ielement];
-        const amrex::Vector<amrex::ParticleReal> b_coef = d_b_coef_arr[ielement];
+        const amrex::ParticleReal* e_coef = d_e_coef_arr[ielement];
+        const amrex::ParticleReal* b_coef = d_b_coef_arr[ielement];
 
-        const amrex::Real pi = 2*asin(1.0);
-        const amrex::Real c = 299792458;
+        const amrex::Real pi = 2.0*asin(1.0);
+        const amrex::Real c = 299792458.0;
 
-        int n_coef = sizeof(e_coef)/2;
+        int n_coef = d_num_e_coef[ielement] / 2;
         amrex::ParticleReal zlen = ze - zs;
-        amrex::ParticleReal xl = 2*pi*freq/c;
-        amrex::ParticleReal tmpcos = cos((2*pi*freq*m_time) + theta)
-        amrex::ParticleReal tmpsin = sin((2*pi*freq*m_time) + theta)
+        amrex::ParticleReal xl = 2.0*pi*freq/c;
+        amrex::ParticleReal tmpcos = cos((2.0*pi*freq*m_time) + theta);
+        amrex::ParticleReal tmpsin = sin((2.0*pi*freq*m_time) + theta);
 
-        amrex::ParticleReal zz = z - ze + zlen/2;
-        amrex::ParticleReal ez = e_coef[0]/2;
+        amrex::ParticleReal zz = z - ze + zlen/2.0;
+        amrex::ParticleReal ez = e_coef[0]/2.0;
         amrex::ParticleReal ezp = 0.0;
         amrex::ParticleReal ezpp = 0.0;
-        amrex::ParticleReal ezppp1 = 0.0;
-        for (int k = 1, k < n_coef, ++k){
-            ez = ez + e_coef[2*k-1]*cos(2*pi*k*zz/zlen) + e_coef[2*k]*sin(2*pi*k*zz/zlen);
-            ezp = ezp - (2*pi*k*zz/zlen)*e_coef[2*k-1]*sin(2*pi*k*zz/zlen) + (2*pi*k*zz/zlen)*e_coef[2*k]*cos(2*pi*k*zz/zlen);
-            ezpp = ezpp - pow(2*pi*k*zz/zlen,2)*e_coef[2*k-1]*cos(2*pi*k*zz/zlen) - pow(2*pi*k*zz/zlen,2)*e_coef[2*k]*sin(2*pi*k*zz/zlen);
-            ezppp = ezppp + pow(2*pi*k*zz/zlen,3)*e_coef[2*k-1]*sin(2*pi*k*zz/zlen) - pow(2*pi*k*zz/zlen,3)*e_coef[2*k]*cos(2*pi*k*zz/zlen);
+        amrex::ParticleReal ezppp = 0.0;
+        for (int k = 1; k < n_coef; ++k){
+            ez = ez + e_coef[2*k-1]*cos(2*pi*k*zz/zlen) + e_coef[2*k]*sin(2.0*pi*k*zz/zlen);
+            ezp = ezp - (2.0*pi*k*zz/zlen)*e_coef[2*k-1]*sin(2.0*pi*k*zz/zlen) + (2.0*pi*k*zz/zlen)*e_coef[2*k]*cos(2.0*pi*k*zz/zlen);
+            ezpp = ezpp - pow(2.0*pi*k*zz/zlen,2)*e_coef[2*k-1]*cos(2.0*pi*k*zz/zlen) - pow(2.0*pi*k*zz/zlen,2)*e_coef[2*k]*sin(2.0*pi*k*zz/zlen);
+            ezppp = ezppp + pow(2.0*pi*k*zz/zlen,3)*e_coef[2*k-1]*sin(2.0*pi*k*zz/zlen) - pow(2.0*pi*k*zz/zlen,3)*e_coef[2*k]*cos(2.0*pi*k*zz/zlen);
         }
         ez = ez*scale;
         ezp = ezp*scale;
@@ -148,11 +150,11 @@ struct SolenoidDevice
         amrex::ParticleReal f1p = -(ezppp + ezp*xl*xl)/4.0;
         amrex::ParticleReal r2 = x*x + y*y;
 
-        Ex = -x*(ezp/2 + f1p*r2/4)*tmpcos;
-        Ey = -y*(ezp/2 + f1p*r2/4)*tmpcos;
+        Ex = -x*(ezp/2.0 + f1p*r2/4.0)*tmpcos;
+        Ey = -y*(ezp/2.0 + f1p*r2/4.0)*tmpcos;
         Ez = (ez + f1*r2)*tmpcos;
-        Bx = y*xl/c*(ez/2 + f1*r2/4)*tmpsin;
-        By = -x*xl/c*(ez/2 + f1*r2/4)*tmpsin;
+        Bx = y*xl/c*(ez/2.0 + f1*r2/4.0)*tmpsin;
+        By = -x*xl/c*(ez/2.0 + f1*r2/4.0)*tmpsin;
         Bz = 0.0;
 
     }
