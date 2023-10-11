@@ -9,6 +9,7 @@
 
 #include "LatticeElementBase.H"
 #include "HardEdged_K.H"
+#include "Utils/WarpXConst.H"
 
 #include <AMReX_REAL.H>
 #include <AMReX_ParmParse.H>
@@ -119,21 +120,21 @@ struct SolenoidDevice
         const amrex::Vector<amrex::ParticleReal> e_coef = d_e_coef_arr[ielement];
         const amrex::Vector<amrex::ParticleReal> b_coef = d_b_coef_arr[ielement];
 
-        const amrex::Real pi = 2*asin(1.0);
-        const amrex::Real c = 299792458;
+        constexpr amrex::ParticleReal pi = MathConst::pi;
+        constexpr amrex::ParticleReal c = PhysConst::c;
 
-        int n_coef = sizeof(e_coef)/2;
-        amrex::ParticleReal zlen = ze - zs;
-        amrex::ParticleReal xl = 2*pi*freq/c;
-        amrex::ParticleReal tmpcos = cos((2*pi*freq*m_time) + theta)
-        amrex::ParticleReal tmpsin = sin((2*pi*freq*m_time) + theta)
+        const int n_coef = sizeof(e_coef)/2;
+        const amrex::ParticleReal zlen = ze - zs;
+        const amrex::ParticleReal xl = 2*pi*freq/c;
+        const amrex::ParticleReal tmpcos = cos((2*pi*freq*m_time) + theta);
+        const amrex::ParticleReal tmpsin = sin((2*pi*freq*m_time) + theta);
 
         amrex::ParticleReal zz = z - ze + zlen/2;
         amrex::ParticleReal ez = e_coef[0]/2;
         amrex::ParticleReal ezp = 0.0;
         amrex::ParticleReal ezpp = 0.0;
-        amrex::ParticleReal ezppp1 = 0.0;
-        for (int k = 1, k < n_coef, ++k){
+        amrex::ParticleReal ezppp = 0.0;
+        for (int k = 1; k < n_coef; ++k){
             ez = ez + e_coef[2*k-1]*cos(2*pi*k*zz/zlen) + e_coef[2*k]*sin(2*pi*k*zz/zlen);
             ezp = ezp - (2*pi*k*zz/zlen)*e_coef[2*k-1]*sin(2*pi*k*zz/zlen) + (2*pi*k*zz/zlen)*e_coef[2*k]*cos(2*pi*k*zz/zlen);
             ezpp = ezpp - pow(2*pi*k*zz/zlen,2)*e_coef[2*k-1]*cos(2*pi*k*zz/zlen) - pow(2*pi*k*zz/zlen,2)*e_coef[2*k]*sin(2*pi*k*zz/zlen);
