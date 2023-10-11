@@ -55,10 +55,15 @@ Solenoid::WriteToDevice ()
     amrex::Gpu::copyAsync(amrex::Gpu::hostToDevice, h_freq.begin(), h_freq.end(), d_freq.begin());
     d_theta.resize(h_theta.size());
     amrex::Gpu::copyAsync(amrex::Gpu::hostToDevice, h_theta.begin(), h_theta.end(), d_theta.begin());
+
     d_e_coef.resize(h_e_coef.size());
-    amrex::Gpu::copyAsync(amrex::Gpu::hostToDevice, h_e_coef.begin(), h_e_coef.end(), d_e_coef.begin());
+    for (auto i = 0lu; i < h_e_coef.size(); ++i) {
+        amrex::Gpu::copyAsync(amrex::Gpu::hostToDevice, h_e_coef[i].begin(), h_e_coef[i].end(), d_e_coef[i].begin());
+    }
     d_b_coef.resize(h_b_coef.size());
-    amrex::Gpu::copyAsync(amrex::Gpu::hostToDevice, h_b_coef.begin(), h_b_coef.end(), d_b_coef.begin());
+    for (auto i = 0lu; i < h_e_coef.size(); ++i) {
+        amrex::Gpu::copyAsync(amrex::Gpu::hostToDevice, h_b_coef[i].begin(), h_b_coef[i].end(), d_b_coef[i].begin());
+    }
 
 }
 
@@ -78,12 +83,19 @@ SolenoidDevice::InitSolenoidDevice (Solenoid const& h_solenoid)
 
     if (nelements == 0) return;
 
+    // remember pointers to device data in simple data structures
     d_zs_arr = h_solenoid.d_zs.data();
     d_ze_arr = h_solenoid.d_ze.data();
     d_scale_arr = h_solenoid.d_scale.data();
     d_freq_arr = h_solenoid.d_freq.data();
     d_theta_arr = h_solenoid.d_theta.data();
-    d_e_coef_arr = h_solenoid.d_e_coef.data();
-    d_b_coef_arr = h_solenoid.d_b_coef.data();
+    for (auto i = 0lu; i < nelements; ++i) {
+        d_num_e_coef[i] = h_solenoid.d_e_coef[i].size();
+        d_e_coef_arr[i] = h_solenoid.d_e_coef[i].data();
+    }
+    for (auto i = 0lu; i < nelements; ++i) {
+        d_num_b_coef[i] = h_solenoid.d_b_coef[i].size();
+        d_b_coef_arr[i] = h_solenoid.d_b_coef[i].data();
+    }
 
 }
