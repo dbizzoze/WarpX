@@ -125,16 +125,11 @@ struct SolenoidDevice
         constexpr amrex::ParticleReal pi = MathConst::pi;
         constexpr amrex::ParticleReal c = PhysConst::c;
 
-        const int n_coef = sizeof(e_coef)/2;
+        const int n_coef = d_num_e_coef[ielement] / 2;
         const amrex::ParticleReal zlen = ze - zs;
-        const amrex::ParticleReal xl = 2*pi*freq/c;
-        const amrex::ParticleReal tmpcos = cos((2*pi*freq*m_time) + theta);
-        const amrex::ParticleReal tmpsin = sin((2*pi*freq*m_time) + theta);
-        int n_coef = d_num_e_coef[ielement] / 2;
-        amrex::ParticleReal zlen = ze - zs;
-        amrex::ParticleReal xl = 2.0*pi*freq/c;
-        amrex::ParticleReal tmpcos = cos((2.0*pi*freq*m_time) + theta);
-        amrex::ParticleReal tmpsin = sin((2.0*pi*freq*m_time) + theta);
+        const amrex::ParticleReal xl = 2.0*pi*freq/c;
+        const amrex::ParticleReal tmpcos = cos((2.0*pi*freq*m_time) + theta);
+        const amrex::ParticleReal tmpsin = sin((2.0*pi*freq*m_time) + theta);
 
         amrex::ParticleReal zz = z - ze + zlen/2.0;
         amrex::ParticleReal ez = e_coef[0]/2.0;
