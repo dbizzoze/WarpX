@@ -9,6 +9,7 @@
 #include "LatticeElements/HardEdgedQuadrupole.H"
 #include "LatticeElements/HardEdgedPlasmaLens.H"
 #include "LatticeElements/Solenoid.H"
+#include "LatticeElements/SolenoidRF.H"
 
 #include <AMReX_ParmParse.H>
 #include <AMReX_REAL.H>
@@ -53,6 +54,10 @@ LatticeElementFinder::AllocateIndices (AcceleratorLattice const& accelerator_lat
     if (accelerator_lattice.h_solenoid.nelements > 0) {
         d_solenoid_indices.resize(m_nz);
     }
+
+    if (accelerator_lattice.h_solenoidrf.nelements > 0) {
+        d_solenoidrf_indices.resize(m_nz);
+    }
 }
 
 void
@@ -84,6 +89,12 @@ LatticeElementFinder::UpdateIndices (int const lev, amrex::MFIter const& a_mfi,
         setup_lattice_indices(accelerator_lattice.h_solenoid.d_zs,
                               accelerator_lattice.h_solenoid.d_ze,
                               d_solenoid_indices);
+    }
+
+    if (accelerator_lattice.h_solenoidrf.nelements > 0) {
+        setup_lattice_indices(accelerator_lattice.h_solenoidrf.d_zs,
+                              accelerator_lattice.h_solenoidrf.d_ze,
+                              d_solenoidrf_indices);
     }
 }
 
@@ -134,6 +145,11 @@ LatticeElementFinderDevice::InitLatticeElementFinderDevice (WarpXParIter const& 
     if (accelerator_lattice.h_solenoid.nelements > 0) {
         d_solenoid = accelerator_lattice.h_solenoid.GetDeviceInstance();
         d_solenoid_indices_arr = h_finder.d_solenoid_indices.data();
+    }
+
+    if (accelerator_lattice.h_solenoidrf.nelements > 0) {
+        d_solenoidrf = accelerator_lattice.h_solenoidrf.GetDeviceInstance();
+        d_solenoidrf_indices_arr = h_finder.d_solenoidrf_indices.data();
     }
 
 }

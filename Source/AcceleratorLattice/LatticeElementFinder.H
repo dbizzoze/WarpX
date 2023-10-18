@@ -10,6 +10,7 @@
 #include "LatticeElements/HardEdgedQuadrupole.H"
 #include "LatticeElements/HardEdgedPlasmaLens.H"
 #include "LatticeElements/Solenoid.H"
+#include "LatticeElements/SolenoidRF.H"
 #include "Particles/Pusher/GetAndSetPosition.H"
 #include "Particles/WarpXParticleContainer.H"
 
@@ -80,6 +81,7 @@ struct LatticeElementFinder
     amrex::Gpu::DeviceVector<int> d_quad_indices;
     amrex::Gpu::DeviceVector<int> d_plasmalens_indices;
     amrex::Gpu::DeviceVector<int> d_solenoid_indices;
+    amrex::Gpu::DeviceVector<int> d_solenoidrf_indices;
 
     /**
      * \brief Fill in the index lookup tables
@@ -178,11 +180,13 @@ struct LatticeElementFinderDevice
     HardEdgedQuadrupoleDevice d_quad;
     HardEdgedPlasmaLensDevice d_plasmalens;
     SolenoidDevice d_solenoid;
+    SolenoidRFDevice d_solenoidrf;
 
     /* Device level index lookup tables for each element type */
     int const* d_quad_indices_arr = nullptr;
     int const* d_plasmalens_indices_arr = nullptr;
     int const* d_solenoid_indices_arr = nullptr;
+    int const* d_solenoidrf_indices_arr = nullptr;
 
     /**
      * \brief Gather the field for the particle from the lattice elements
@@ -257,6 +261,20 @@ struct LatticeElementFinderDevice
                 const auto ielement = d_solenoid_indices_arr[iz];
                 amrex::ParticleReal Ex, Ey, Ez, Bx, By, Bz;
                 d_solenoid.get_field(ielement, x, y, z, m_time, Ex, Ey, Ez, Bx, By, Bz);
+                Ex_sum += Ex;
+                Ey_sum += Ey;
+                Ez_sum += Ez;
+                Bx_sum += Bx;
+                By_sum += By;
+                Bz_sum += Bz;
+            }
+        }
+
+        if (d_solenoidrf.nelements > 0) {
+            if (d_solenoidrf_indices_arr[iz] > -1) {
+                const auto ielement = d_solenoidrf_indices_arr[iz];
+                amrex::ParticleReal Ex, Ey, Ez, Bx, By, Bz;
+                d_solenoidrf.get_field(ielement, x, y, z, m_time, Ex, Ey, Ez, Bx, By, Bz);
                 Ex_sum += Ex;
                 Ey_sum += Ey;
                 Ez_sum += Ez;
