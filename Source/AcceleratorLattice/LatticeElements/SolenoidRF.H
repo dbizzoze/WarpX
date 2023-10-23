@@ -121,7 +121,7 @@ struct SolenoidRFDevice
         constexpr amrex::ParticleReal pi = MathConst::pi;   // Everyone's favorite circle ratio
         constexpr amrex::ParticleReal c = PhysConst::c;
 
-        const int n_coef = d_num_e_coef[ielement] / 2;      // Number of coef. is half the length of the list: odd coef. are cosine, even are sine, 
+        const int n_coef = (d_num_e_coef[ielement]-1) / 2;  // Number of coef. is half the length of the list: zero and odd inds are cosine, even inds are sine
         const amrex::ParticleReal zlen = ze - zs;           // Length of element
         const amrex::ParticleReal xl = 2.0*pi*freq/c;       // Wavelength of RF frequency
         const amrex::ParticleReal tmpcos = cos((2.0*pi*freq*m_time) + theta);   // Cosine factor based on time and phase shift

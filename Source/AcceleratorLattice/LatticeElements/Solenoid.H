@@ -48,16 +48,10 @@ struct Solenoid
 
     // Host variables read from input file
     std::vector<amrex::ParticleReal> h_scale;
-    std::vector<amrex::ParticleReal> h_freq;
-    std::vector<amrex::ParticleReal> h_theta;
-    std::vector<std::vector<amrex::ParticleReal>> h_e_coef;
     std::vector<std::vector<amrex::ParticleReal>> h_b_coef;
 
     // Device variable read from input files
     amrex::Gpu::DeviceVector<amrex::ParticleReal> d_scale;
-    amrex::Gpu::DeviceVector<amrex::ParticleReal> d_freq;
-    amrex::Gpu::DeviceVector<amrex::ParticleReal> d_theta;
-    amrex::Vector<amrex::Gpu::DeviceVector<amrex::ParticleReal>> d_e_coef;
     amrex::Vector<amrex::Gpu::DeviceVector<amrex::ParticleReal>> d_b_coef;
 
     /**
@@ -85,11 +79,7 @@ struct SolenoidDevice
     const amrex::ParticleReal* AMREX_RESTRICT d_zs_arr;
     const amrex::ParticleReal* AMREX_RESTRICT d_ze_arr;
     const amrex::ParticleReal* AMREX_RESTRICT d_scale_arr;
-    const amrex::ParticleReal* AMREX_RESTRICT d_freq_arr;
-    const amrex::ParticleReal* AMREX_RESTRICT d_theta_arr;
-    unsigned long* AMREX_RESTRICT d_num_e_coef;
     unsigned long* AMREX_RESTRICT d_num_b_coef;
-    const amrex::ParticleReal** AMREX_RESTRICT d_e_coef_arr;
     const amrex::ParticleReal** AMREX_RESTRICT d_b_coef_arr;
 
     /**
@@ -117,46 +107,38 @@ struct SolenoidDevice
         const amrex::ParticleReal zs = d_zs_arr[ielement];
         const amrex::ParticleReal ze = d_ze_arr[ielement];
         const amrex::ParticleReal scale = d_scale_arr[ielement];
-        const amrex::ParticleReal freq = d_freq_arr[ielement];
-        const amrex::ParticleReal theta = d_theta_arr[ielement];
-        const amrex::ParticleReal* e_coef = d_e_coef_arr[ielement];
         const amrex::ParticleReal* b_coef = d_b_coef_arr[ielement];
 
         constexpr amrex::ParticleReal pi = MathConst::pi;   // Everyone's favorite circle ratio
         constexpr amrex::ParticleReal c = PhysConst::c;
 
-        const int n_coef = d_num_e_coef[ielement] / 2;      // Number of coef. is half the length of the list: odd coef. are cosine, even are sine, 
+        const int n_coef = (d_num_b_coef[ielement]-1) / 2;  // Number of coef. is half the length of the list: zero and odd inds are cosine, even inds are sine
         const amrex::ParticleReal zlen = ze - zs;           // Length of element
-        const amrex::ParticleReal xl = 2.0*pi*freq/c;       // Wavelength of RF frequency
-        const amrex::ParticleReal tmpcos = cos((2.0*pi*freq*m_time) + theta);   // Cosine factor based on time and phase shift
-        const amrex::ParticleReal tmpsin = sin((2.0*pi*freq*m_time) + theta);   // Sine factor based on time and phase shift
 
         amrex::ParticleReal zz = z - ze + zlen/2.0;         // Shifted coordinate to midpoint of element (zz = 0 is midpoint of element)
-        amrex::ParticleReal ez = e_coef[0]/2.0;             // A_0 cosine fourier coef. is halved (sine coef. is trivially zero)
-        amrex::ParticleReal ezp = 0.0;                      // Variable to store Ez'(zz) (z-derivative of on-axis longitudinal field at z = zz)
-        amrex::ParticleReal ezpp = 0.0;                     // Variable to store Ez''(zz)
-        amrex::ParticleReal ezppp = 0.0;                    // Variable to store Ez'''(zz)
+        amrex::ParticleReal bz = b_coef[0]/2.0;             // A_0 cosine fourier coef. is halved (sine coef. is trivially zero)
+        amrex::ParticleReal bzp = 0.0;                      // Variable to store Bz'(zz) (z-derivative of on-axis longitudinal field at z = zz)
+        amrex::ParticleReal bzpp = 0.0;                     // Variable to store Bz''(zz)
+        amrex::ParticleReal bzppp = 0.0;                    // Variable to store Bz'''(zz)
         for (int k = 1; k < n_coef; ++k){
-            ez = ez + e_coef[2*k-1]*cos(2*pi*k*zz/zlen) + e_coef[2*k]*sin(2.0*pi*k*zz/zlen);
-            ezp = ezp - (2.0*pi*k*zz/zlen)*e_coef[2*k-1]*sin(2.0*pi*k*zz/zlen) + (2.0*pi*k*zz/zlen)*e_coef[2*k]*cos(2.0*pi*k*zz/zlen);
-            ezpp = ezpp - pow(2.0*pi*k*zz/zlen,2)*e_coef[2*k-1]*cos(2.0*pi*k*zz/zlen) - pow(2.0*pi*k*zz/zlen,2)*e_coef[2*k]*sin(2.0*pi*k*zz/zlen);
-            ezppp = ezppp + pow(2.0*pi*k*zz/zlen,3)*e_coef[2*k-1]*sin(2.0*pi*k*zz/zlen) - pow(2.0*pi*k*zz/zlen,3)*e_coef[2*k]*cos(2.0*pi*k*zz/zlen);
+            bz = bz + b_coef[2*k-1]*cos(2*pi*k*zz/zlen) + b_coef[2*k]*sin(2.0*pi*k*zz/zlen);
+            bzp = bzp - (2.0*pi*k*zz/zlen)*b_coef[2*k-1]*sin(2.0*pi*k*zz/zlen) + (2.0*pi*k*zz/zlen)*b_coef[2*k]*cos(2.0*pi*k*zz/zlen);
+            bzpp = bzpp - pow(2.0*pi*k*zz/zlen,2)*b_coef[2*k-1]*cos(2.0*pi*k*zz/zlen) - pow(2.0*pi*k*zz/zlen,2)*b_coef[2*k]*sin(2.0*pi*k*zz/zlen);
+            bzppp = bzppp + pow(2.0*pi*k*zz/zlen,3)*b_coef[2*k-1]*sin(2.0*pi*k*zz/zlen) - pow(2.0*pi*k*zz/zlen,3)*b_coef[2*k]*cos(2.0*pi*k*zz/zlen);
         }
-        ez = ez*scale;          // Scale fields and derivatives by user-provided scaling factor (from input file)
-        ezp = ezp*scale;
-        ezpp = ezpp*scale;
-        ezppp = ezppp*scale;
+        bz = bz*scale;          // Scale fields and derivatives by user-provided scaling factor (from input file)
+        bzp = bzp*scale;
+        bzpp = bzpp*scale;
+        bzppp = bzppp*scale;
 
-        amrex::ParticleReal f1 = -(ezpp + ez*xl*xl)/4.0;
-        amrex::ParticleReal f1p = -(ezppp + ezp*xl*xl)/4.0;
         amrex::ParticleReal r2 = x*x + y*y;
 
-        Ex = -x*(ezp/2.0 + f1p*r2/4.0)*tmpcos;      // Update E and B fields from Fourier coefficients and scaling factors
-        Ey = -y*(ezp/2.0 + f1p*r2/4.0)*tmpcos;
-        Ez = (ez + f1*r2)*tmpcos;
-        Bx = y*xl/c*(ez/2.0 + f1*r2/4.0)*tmpsin;
-        By = -x*xl/c*(ez/2.0 + f1*r2/4.0)*tmpsin;
-        Bz = 0.0;
+        Ex = 0.0;      // Update E and B fields from Fourier coefficients and scaling factors
+        Ey = 0.0;
+        Ez = 0.0;
+        Bx = -(bzp*x/2) + (bzppp*x*r2/16);
+        By = -(bzp*y/2) + (bzppp*y*r2/16);
+        Bz = bz - (bzpp*r2/4);
 
     }
 
