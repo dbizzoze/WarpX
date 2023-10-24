@@ -77,7 +77,7 @@ struct SolenoidRFDevice
      *
      * @param[in] h_solenoidrf host level instance that this is associated with
      */
-    void InitSolenoidRFDevice (Solenoid const& h_solenoid);
+    void InitSolenoidRFDevice (SolenoidRF const& h_solenoidrf);
 
     int nelements = 0;
 
