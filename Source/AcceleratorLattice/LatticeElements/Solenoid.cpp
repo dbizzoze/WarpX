@@ -44,7 +44,7 @@ Solenoid::WriteToDevice ()
     amrex::Gpu::copyAsync(amrex::Gpu::hostToDevice, h_scale.begin(), h_scale.end(), d_scale.begin());
 
     d_b_coef.resize(h_b_coef.size());
-    for (auto i = 0lu; i < h_e_coef.size(); ++i) {
+    for (auto i = 0lu; i < h_b_coef.size(); ++i) {
         amrex::Gpu::copyAsync(amrex::Gpu::hostToDevice, h_b_coef[i].begin(), h_b_coef[i].end(), d_b_coef[i].begin());
     }
 
