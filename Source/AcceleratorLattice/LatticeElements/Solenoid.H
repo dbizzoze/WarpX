@@ -95,7 +95,6 @@ struct SolenoidDevice
                     const amrex::ParticleReal x,
                     const amrex::ParticleReal y,
                     const amrex::ParticleReal z,
-                    const amrex::ParticleReal m_time,
                     amrex::ParticleReal& Ex,
                     amrex::ParticleReal& Ey,
                     amrex::ParticleReal& Ez,
@@ -110,7 +109,6 @@ struct SolenoidDevice
         const amrex::ParticleReal* b_coef = d_b_coef_arr[ielement];
 
         constexpr amrex::ParticleReal pi = MathConst::pi;   // Everyone's favorite circle ratio
-        constexpr amrex::ParticleReal c = PhysConst::c;
 
         const int n_coef = (d_num_b_coef[ielement]-1) / 2;  // Number of coef. is half the length of the list: zero and odd inds are cosine, even inds are sine
         const amrex::ParticleReal zlen = ze - zs;           // Length of element
