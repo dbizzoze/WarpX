@@ -79,7 +79,7 @@ class Species(picmistandard.PICMI_Species):
         Whether or not to push this species
 
     warpx_do_not_gather: bool, default=False
-        Whether or not to gahter the fields from grids for this species
+        Whether or not to gather the fields from grids for this species
 
     warpx_random_theta: bool, default=True
         Whether or not to add random angle to the particles in theta
@@ -561,7 +561,7 @@ class CylindricalGrid(picmistandard.PICMI_CylindricalGrid):
     See `Input Parameters <https://warpx.readthedocs.io/en/latest/usage/parameters.html>`__ for more information.
 
     Parameters
-    ---------
+    ----------
     warpx_max_grid_size: integer, default=32
        Maximum block size in either direction
 
@@ -681,7 +681,7 @@ class Cartesian1DGrid(picmistandard.PICMI_Cartesian1DGrid):
     See `Input Parameters <https://warpx.readthedocs.io/en/latest/usage/parameters.html>`__ for more information.
 
     Parameters
-    ---------
+    ----------
     warpx_max_grid_size: integer, default=32
        Maximum block size in either direction
 
@@ -770,7 +770,7 @@ class Cartesian2DGrid(picmistandard.PICMI_Cartesian2DGrid):
     See `Input Parameters <https://warpx.readthedocs.io/en/latest/usage/parameters.html>`__ for more information.
 
     Parameters
-    ---------
+    ----------
     warpx_max_grid_size: integer, default=32
        Maximum block size in either direction
 
@@ -879,7 +879,7 @@ class Cartesian3DGrid(picmistandard.PICMI_Cartesian3DGrid):
     See `Input Parameters <https://warpx.readthedocs.io/en/latest/usage/parameters.html>`__ for more information.
 
     Parameters
-    ---------
+    ----------
     warpx_max_grid_size: integer, default=32
        Maximum block size in either direction
 
@@ -1196,7 +1196,7 @@ class ElectrostaticSolver(picmistandard.PICMI_ElectrostaticSolver):
         Whether to use the relativistic solver or lab frame solver
 
     warpx_absolute_tolerance: float, default=0.
-        Absolute tolerance on the lab fram solver
+        Absolute tolerance on the lab frame solver
 
     warpx_self_fields_verbosity: integer, default=2
         Level of verbosity for the lab frame solver
@@ -1422,7 +1422,7 @@ class FieldIonization(picmistandard.PICMI_FieldIonization):
 
 class CoulombCollisions(picmistandard.base._ClassWithInit):
     """
-    Custom class to handle setup of binary Coulmb collisions in WarpX. If
+    Custom class to handle setup of binary Coulomb collisions in WarpX. If
     collision initialization is added to picmistandard this can be changed to
     inherit that functionality.
 
@@ -1649,13 +1649,13 @@ class PlasmaLens(picmistandard.base._ClassWithInit):
 
     The field that is applied depends on the transverse position of the particle, (x,y)
 
-    - Ex = x*stengths_E
+    - Ex = x*strengths_E
 
-    - Ey = y*stengths_E
+    - Ey = y*strengths_E
 
-    - Bx = +y*stengths_B
+    - Bx = +y*strengths_B
 
-    - By = -x*stengths_B
+    - By = -x*strengths_B
 
     """
     def __init__(self, period, starts, lengths, strengths_E=None, strengths_B=None, **kw):
@@ -1828,9 +1828,11 @@ class Simulation(picmistandard.PICMI_Simulation):
     warpx_sort_idx_type: list of int, optional (default: 0 0 0)
         This controls the type of grid used to sort the particles when sort_particles_for_deposition is true.
         Possible values are:
-            idx_type = {0, 0, 0}: Sort particles to a cell centered grid,
-            idx_type = {1, 1, 1}: Sort particles to a node centered grid,
-            idx_type = {2, 2, 2}: Compromise between a cell and node centered grid.
+
+        * idx_type = {0, 0, 0}: Sort particles to a cell centered grid,
+        * idx_type = {1, 1, 1}: Sort particles to a node centered grid,
+        * idx_type = {2, 2, 2}: Compromise between a cell and node centered grid.
+
         In 2D (XZ and RZ), only the first two elements are read. In 1D, only the first element is read.
 
     warpx_sort_bin_size: list of int, optional (default 1 1 1)
@@ -2700,7 +2702,7 @@ class ReducedDiagnostic(picmistandard.base._ClassWithInit, WarpXDiagnosticBase):
     reduction_type: {'Maximum', 'Minimum', or 'Integral'}
         For diagnostic type 'FieldReduction', the type of reduction
 
-    probe_geometry: {'Point', 'Line', 'Plane'}, defaut='Point'
+    probe_geometry: {'Point', 'Line', 'Plane'}, default='Point'
         For diagnostic type 'FieldProbe', the geometry of the probe
 
     integrate: bool, default=false
