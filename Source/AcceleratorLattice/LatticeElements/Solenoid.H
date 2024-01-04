@@ -52,7 +52,7 @@ struct Solenoid
 
     // Device variable read from input files
     amrex::Gpu::DeviceVector<amrex::ParticleReal> d_scale;
-    amrex::Vector<amrex::Gpu::DeviceVector<amrex::ParticleReal>> d_b_coef;
+    amrex::Gpu::DeviceVector<amrex::Vector<amrex::ParticleReal> *> d_b_coef;
 
     /**
      * \brief Returns the device level instance with the lattice information
